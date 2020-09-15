@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:pro_work_tree_task/custom_widgts/platform_alert_box.dart';
 import 'package:pro_work_tree_task/models/http_exception.dart';
+import 'package:pro_work_tree_task/provider/auth_provider.dart';
+import 'package:provider/provider.dart';
 
 enum AuthMode { Signup, Login }
 
@@ -10,16 +13,26 @@ class AuthScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final deviceSize = MediaQuery.of(context).size;
 
-    return Scaffold(
-      body: Container(
-        height: deviceSize.height,
-        width: deviceSize.width,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            AuthCard(),
-          ],
+    return WillPopScope(
+      onWillPop: () async {
+        return await PlatFormAlertDialogBox(
+          content: 'Do you want to exit?',
+          defaultActionText: 'Yes',
+          title: "Exit",
+          cancelActionText: 'No',
+        ).show(context);
+      },
+      child: Scaffold(
+        body: Container(
+          height: deviceSize.height,
+          width: deviceSize.width,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              AuthCard(),
+            ],
+          ),
         ),
       ),
     );
@@ -64,32 +77,39 @@ class _AuthCardState extends State<AuthCard>
     try {
       if (_authMode == AuthMode.Login) {
         // Log user in
-
+        await Provider.of<AuthProvider>(context, listen: false)
+            .login(_authData);
+        Navigator.pushNamedAndRemoveUntil<Widget>(
+          context,
+          '/',
+          ModalRoute.withName(AuthScreen.pageName),
+        );
       } else {
         // Sign user up
-
+        await Provider.of<AuthProvider>(context, listen: false)
+            .signup(_authData);
+        PlatFormAlertDialogBox(
+                title: 'Sing-Up',
+                content: 'Sign Up Successful',
+                defaultActionText: 'Ok')
+            .show(context);
         setState(() {
           _authMode = AuthMode.Login;
         });
       }
     } on HttpException catch (error) {
-      var errorMessage = 'Authentication Failed';
-      if (error.messge.contains('EMAIL_NOT_FOUND')) {
-        errorMessage = 'Email not exist.';
-      } else if (error.messge.contains('INVALID_PASSWORD')) {
-        errorMessage = 'Wrong password.';
-      } else if (error.messge.contains('EMAIL_EXISTS')) {
-        errorMessage = 'This email is already in use.';
-      } else if (error.messge.contains('INVALID_EMAIL')) {
-        errorMessage = 'Invalid Email.';
-      } else if (error.messge.contains('WEAK_PASSWORD')) {
-        errorMessage = 'Password is too weak.';
-      }
+      PlatFormAlertDialogBox(
+              title: 'Error', content: error.messge, defaultActionText: 'Ok')
+          .show(context);
     } catch (error) {
       const errorMessage = 'Something went wrong. Please try again later';
+      PlatFormAlertDialogBox(
+              title: 'Error', content: errorMessage, defaultActionText: 'Ok')
+          .show(context);
     }
     setState(() {
       _isLoading = false;
+      _passwordController.text = '';
     });
   }
 
@@ -136,6 +156,7 @@ class _AuthCardState extends State<AuthCard>
   @override
   void dispose() {
     _animationController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -171,9 +192,10 @@ class _AuthCardState extends State<AuthCard>
                     if (value.isEmpty || !value.contains('@')) {
                       return 'Invalid email!';
                     }
+                    return null;
                   },
                   onSaved: (value) {
-                    _authData['email'] = value;
+                    _authData['email'] = value.trim();
                   },
                 ),
                 TextFormField(
@@ -184,9 +206,10 @@ class _AuthCardState extends State<AuthCard>
                     if (value.isEmpty || value.length < 5) {
                       return 'Password is too short!';
                     }
+                    return null;
                   },
                   onSaved: (value) {
-                    _authData['password'] = value;
+                    _authData['password'] = value.trim();
                   },
                 ),
                 // if (_authMode == AuthMode.Signup)
@@ -211,6 +234,7 @@ class _AuthCardState extends State<AuthCard>
                                 if (value != _passwordController.text) {
                                   return 'Passwords do not match!';
                                 }
+                                return null;
                               }
                             : null,
                       ),
