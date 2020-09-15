@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:pro_work_tree_task/models/http_exception.dart';
+import 'package:pro_work_tree_task/screen/auth_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
@@ -54,6 +55,19 @@ class AuthProvider with ChangeNotifier {
     } catch (err) {
       throw err;
     }
+  }
+
+  Future<void> logout(BuildContext context) async {
+    await Future<void>.delayed(Duration(seconds: 1));
+    var _shredPref = await SharedPreferences.getInstance();
+    await _shredPref.clear();
+    Navigator.pop(context);
+    // ignore: unawaited_futures
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/',
+      ModalRoute.withName(AuthScreen.pageName),
+    );
   }
 
   Future<void> login(Map<String, String> authData) async {
