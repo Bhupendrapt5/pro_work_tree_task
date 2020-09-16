@@ -38,7 +38,6 @@ class SplashScreen extends StatelessWidget {
 
   _navigateToHome(BuildContext context, AuthProvider _authProvider) async {
     var isLoggedIn = await _authProvider.initialize();
-    print('logded in : $isLoggedIn');
     Timer(
       Duration(seconds: 3),
       () async {

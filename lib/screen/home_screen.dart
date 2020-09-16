@@ -45,7 +45,6 @@ class HomeScreen extends StatelessWidget {
         future: getUserList(),
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.waiting) {
-            print('data : ${snapshot.data}');
             return ListView.separated(
                 itemBuilder: (context, index) => UserItemCard(
                       userDataModel:
